@@ -2,142 +2,142 @@ import pygame
 import random
 import sys
 
-# --- Innstillinger ---
-CELLE = 20          # Størrelse på hver rute i piksler
-KOLONNER = 30       # Antall kolonner
-RADER = 25          # Antall rader
-BREDDE = CELLE * KOLONNER
-HØYDE = CELLE * RADER
-FPS = 10            # Hastighet (ruter per sekund)
+# --- Settings ---
+CELL        = 20        # Size of each tile in pixels
+COLUMNS     = 30        # Number of columns
+ROWS        = 25        # Number of rows
+WIDTH       = CELL * COLUMNS
+HEIGHT      = CELL * ROWS
+FPS         = 10        # Speed (tiles per second)
 
-# Farger
-SORT      = (  0,   0,   0)
-HVIT      = (255, 255, 255)
-GRØNN     = ( 50, 205,  50)
-MØRK_GRØNN= ( 34, 139,  34)
-RØD       = (220,  20,  60)
-GRÅ       = ( 40,  40,  40)
-ORANSJE   = (255, 165,   0)
+# Colors
+BLACK       = (  0,   0,   0)
+WHITE       = (255, 255, 255)
+GREEN       = ( 50, 205,  50)
+DARK_GREEN  = ( 34, 139,  34)
+RED         = (220,  20,  60)
+GRAY        = ( 40,  40,  40)
+ORANGE      = (255, 165,   0)
 
-# Retninger
-OPP   = ( 0, -1)
-NED   = ( 0,  1)
-VENSTRE = (-1,  0)
-HØYRE   = ( 1,  0)
-
-
-def tegn_rute(overflate, farge, x, y, ramme=False):
-    rect = pygame.Rect(x * CELLE, y * CELLE, CELLE, CELLE)
-    pygame.draw.rect(overflate, farge, rect)
-    if ramme:
-        pygame.draw.rect(overflate, SORT, rect, 1)
+# Directions
+UP    = ( 0, -1)
+DOWN  = ( 0,  1)
+LEFT  = (-1,  0)
+RIGHT = ( 1,  0)
 
 
-def tilfeldig_mat(slange):
+def draw_tile(surface, color, x, y, border=False):
+    rect = pygame.Rect(x * CELL, y * CELL, CELL, CELL)
+    pygame.draw.rect(surface, color, rect)
+    if border:
+        pygame.draw.rect(surface, BLACK, rect, 1)
+
+
+def random_food(snake):
     while True:
-        pos = (random.randint(0, KOLONNER - 1), random.randint(0, RADER - 1))
-        if pos not in slange:
+        pos = (random.randint(0, COLUMNS - 1), random.randint(0, ROWS - 1))
+        if pos not in snake:
             return pos
 
 
-def vis_tekst(overflate, tekst, størrelse, x, y, farge=HVIT, sentrert=False):
-    font = pygame.font.SysFont("segoeui", størrelse, bold=True)
-    flate = font.render(tekst, True, farge)
-    if sentrert:
-        rect = flate.get_rect(center=(x, y))
+def draw_text(surface, text, size, x, y, color=WHITE, centered=False):
+    font = pygame.font.SysFont("segoeui", size, bold=True)
+    rendered = font.render(text, True, color)
+    if centered:
+        rect = rendered.get_rect(center=(x, y))
     else:
-        rect = flate.get_rect(topleft=(x, y))
-    overflate.blit(flate, rect)
+        rect = rendered.get_rect(topleft=(x, y))
+    surface.blit(rendered, rect)
 
 
-def spill_løkke():
+def game_loop():
     pygame.init()
-    skjerm = pygame.display.set_mode((BREDDE, HØYDE))
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Snake")
-    klokke = pygame.time.Clock()
+    clock = pygame.time.Clock()
 
-    # Spilltilstand
-    slange = [(KOLONNER // 2, RADER // 2)]
-    retning = HØYRE
-    neste_retning = HØYRE
-    mat = tilfeldig_mat(slange)
-    poeng = 0
-    spiller = True  # False = game over
+    # Game state
+    snake = [(COLUMNS // 2, ROWS // 2)]
+    direction = RIGHT
+    next_direction = RIGHT
+    food = random_food(snake)
+    score = 0
+    alive = True  # False = game over
 
     while True:
-        # --- Hendelser ---
-        for hendelse in pygame.event.get():
-            if hendelse.type == pygame.QUIT:
+        # --- Events ---
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if hendelse.type == pygame.KEYDOWN:
-                if not spiller:
-                    # Trykk på en tast for å starte på nytt
-                    return spill_løkke()
-                if hendelse.key in (pygame.K_UP, pygame.K_w) and retning != NED:
-                    neste_retning = OPP
-                elif hendelse.key in (pygame.K_DOWN, pygame.K_s) and retning != OPP:
-                    neste_retning = NED
-                elif hendelse.key in (pygame.K_LEFT, pygame.K_a) and retning != HØYRE:
-                    neste_retning = VENSTRE
-                elif hendelse.key in (pygame.K_RIGHT, pygame.K_d) and retning != VENSTRE:
-                    neste_retning = HØYRE
+            if event.type == pygame.KEYDOWN:
+                if not alive:
+                    # Press any key to restart
+                    return game_loop()
+                if event.key in (pygame.K_UP, pygame.K_w) and direction != DOWN:
+                    next_direction = UP
+                elif event.key in (pygame.K_DOWN, pygame.K_s) and direction != UP:
+                    next_direction = DOWN
+                elif event.key in (pygame.K_LEFT, pygame.K_a) and direction != RIGHT:
+                    next_direction = LEFT
+                elif event.key in (pygame.K_RIGHT, pygame.K_d) and direction != LEFT:
+                    next_direction = RIGHT
 
-        if spiller:
-            retning = neste_retning
+        if alive:
+            direction = next_direction
 
-            # Flytt hodet
-            hode_x, hode_y = slange[0]
-            ny_x = hode_x + retning[0]
-            ny_y = hode_y + retning[1]
-            ny_hode = (ny_x, ny_y)
+            # Move head
+            head_x, head_y = snake[0]
+            new_x = head_x + direction[0]
+            new_y = head_y + direction[1]
+            new_head = (new_x, new_y)
 
-            # Sjekk kollisjon med vegg
-            if not (0 <= ny_x < KOLONNER and 0 <= ny_y < RADER):
-                spiller = False
-            # Sjekk kollisjon med seg selv
-            elif ny_hode in slange:
-                spiller = False
+            # Check wall collision
+            if not (0 <= new_x < COLUMNS and 0 <= new_y < ROWS):
+                alive = False
+            # Check self collision
+            elif new_head in snake:
+                alive = False
             else:
-                slange.insert(0, ny_hode)
-                if ny_hode == mat:
-                    poeng += 1
-                    mat = tilfeldig_mat(slange)
+                snake.insert(0, new_head)
+                if new_head == food:
+                    score += 1
+                    food = random_food(snake)
                 else:
-                    slange.pop()
+                    snake.pop()
 
-        # --- Tegning ---
-        skjerm.fill(GRÅ)
+        # --- Drawing ---
+        screen.fill(GRAY)
 
-        # Tegn rutenett (subtilt)
-        for kol in range(KOLONNER):
-            for rad in range(RADER):
-                rect = pygame.Rect(kol * CELLE, rad * CELLE, CELLE, CELLE)
-                pygame.draw.rect(skjerm, (50, 50, 50), rect, 1)
+        # Draw grid (subtle)
+        for col in range(COLUMNS):
+            for row in range(ROWS):
+                rect = pygame.Rect(col * CELL, row * CELL, CELL, CELL)
+                pygame.draw.rect(screen, (50, 50, 50), rect, 1)
 
-        # Tegn mat
-        tegn_rute(skjerm, RØD, mat[0], mat[1])
+        # Draw food
+        draw_tile(screen, RED, food[0], food[1])
 
-        # Tegn slange
-        for i, (x, y) in enumerate(slange):
-            farge = GRØNN if i > 0 else MØRK_GRØNN
-            tegn_rute(skjerm, farge, x, y, ramme=True)
+        # Draw snake
+        for i, (x, y) in enumerate(snake):
+            color = GREEN if i > 0 else DARK_GREEN
+            draw_tile(screen, color, x, y, border=True)
 
-        # Tegn poeng
-        vis_tekst(skjerm, f"Poeng: {poeng}", 22, 8, 6, ORANSJE)
+        # Draw score
+        draw_text(screen, f"Score: {score}", 22, 8, 6, ORANGE)
 
-        # Game over-melding
-        if not spiller:
-            overlay = pygame.Surface((BREDDE, HØYDE), pygame.SRCALPHA)
+        # Game over overlay
+        if not alive:
+            overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 160))
-            skjerm.blit(overlay, (0, 0))
-            vis_tekst(skjerm, "GAME OVER", 54, BREDDE // 2, HØYDE // 2 - 40, RØD, sentrert=True)
-            vis_tekst(skjerm, f"Poeng: {poeng}", 34, BREDDE // 2, HØYDE // 2 + 20, HVIT, sentrert=True)
-            vis_tekst(skjerm, "Trykk en tast for å spille igjen", 20, BREDDE // 2, HØYDE // 2 + 70, (180, 180, 180), sentrert=True)
+            screen.blit(overlay, (0, 0))
+            draw_text(screen, "GAME OVER", 54, WIDTH // 2, HEIGHT // 2 - 40, RED, centered=True)
+            draw_text(screen, f"Score: {score}", 34, WIDTH // 2, HEIGHT // 2 + 20, WHITE, centered=True)
+            draw_text(screen, "Press any key to play again", 20, WIDTH // 2, HEIGHT // 2 + 70, (180, 180, 180), centered=True)
 
         pygame.display.flip()
-        klokke.tick(FPS)
+        clock.tick(FPS)
 
 
 if __name__ == "__main__":
-    spill_løkke()
+    game_loop()
