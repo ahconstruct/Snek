@@ -2,28 +2,12 @@ import pygame
 import random
 import sys
 
-# --- Settings ---
-CELL        = 20        # Size of each tile in pixels
-COLUMNS     = 30        # Number of columns
-ROWS        = 25        # Number of rows
-WIDTH       = CELL * COLUMNS
-HEIGHT      = CELL * ROWS
-FPS         = 10        # Speed (tiles per second)
-
-# Colors
-BLACK       = (  0,   0,   0)
-WHITE       = (255, 255, 255)
-GREEN       = ( 50, 205,  50)
-DARK_GREEN  = ( 34, 139,  34)
-RED         = (220,  20,  60)
-GRAY        = ( 40,  40,  40)
-ORANGE      = (255, 165,   0)
-
-# Directions
-UP    = ( 0, -1)
-DOWN  = ( 0,  1)
-LEFT  = (-1,  0)
-RIGHT = ( 1,  0)
+from settings import (
+    CELL, COLUMNS, ROWS, WIDTH, HEIGHT, FPS,
+    BLACK, GREEN, DARK_GREEN, RED, GRAY, ORANGE,
+    UP, DOWN, LEFT, RIGHT,
+)
+from screens import draw_text, draw_game_over
 
 
 def draw_tile(surface, color, x, y, border=False):
@@ -38,16 +22,6 @@ def random_food(snake):
         pos = (random.randint(0, COLUMNS - 1), random.randint(0, ROWS - 1))
         if pos not in snake:
             return pos
-
-
-def draw_text(surface, text, size, x, y, color=WHITE, centered=False):
-    font = pygame.font.SysFont("segoeui", size, bold=True)
-    rendered = font.render(text, True, color)
-    if centered:
-        rect = rendered.get_rect(center=(x, y))
-    else:
-        rect = rendered.get_rect(topleft=(x, y))
-    surface.blit(rendered, rect)
 
 
 def game_loop():
@@ -128,16 +102,7 @@ def game_loop():
 
         # Game over overlay
         if not alive:
-            overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, 160))
-            screen.blit(overlay, (0, 0))
-            draw_text(screen, "GAME OVER", 54, WIDTH // 2, HEIGHT // 2 - 40, RED, centered=True)
-            draw_text(screen, f"Score: {score}", 34, WIDTH // 2, HEIGHT // 2 + 20, WHITE, centered=True)
-            draw_text(screen, "Press any key to play again", 20, WIDTH // 2, HEIGHT // 2 + 70, (180, 180, 180), centered=True)
+            draw_game_over(screen, score)
 
         pygame.display.flip()
         clock.tick(FPS)
-
-
-if __name__ == "__main__":
-    game_loop()
